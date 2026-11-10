@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Notes App</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
+    h2 {
+      margin-top: 2rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 320px;
+    }
+
+    input {
+      padding: 6px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    #msg-register,
+    #msg-login {
+      margin-top: 8px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Notes App</h1>
+
+  <h2>Inscription</h2>
+  <form id="form-register">
+    <input type="email" id="reg-email" placeholder="Email" required>
+    <input type="password" id="reg-password" placeholder="Mot de passe" required>
+    <button type="submit">Créer un compte</button>
+  </form>
+  <p id="msg-register"></p>
+
+  <h2>Connexion</h2>
+  <form id="form-login">
+    <input type="email" id="login-email" placeholder="Email" required>
+    <input type="password" id="login-password" placeholder="Mot de passe" required>
+    <button type="submit">Se connecter</button>
+  </form>
+  <p id="msg-login"></p>
+
+  <script>
+    const API = 'http:///note-app/api';
+
+    document.getElementById('form-register').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+      const msgEl = document.getElementById('msg-register');
+
+      try {
+        const res = await fetch(`${API}/register.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        msgEl.style.color = res.ok ? 'green' : 'red';
+        msgEl.textContent = res.ok ? data.message : data.erreur;
+      } catch (err) {
+        msgEl.style.color = 'red';
+        msgEl.textContent = 'Erreur réseau';
+      }
+    });
+
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      connecter();
+    });
+
+    async function connecter() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      const reponse = await fetch('http://note-app/api/login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await reponse.json();
+
+      if (reponse.ok) {
+
+        localStorage.setItem('token', data.token);
+        document.getElementById('statut').textContent = 'Connecté : ' + email;
+        chargerNotes();
+      } else {
+        document.getElementById('statut').textContent = 'Erreur : ' + data.erreur;
+      }
+    }
+  </script>
+</body>
+
+</html>
