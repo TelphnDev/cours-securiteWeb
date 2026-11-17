@@ -1,10 +1,7 @@
 <?php
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['erreur' => 'Méthode non autorisée']); exit; }
 
 $body = json_decode(file_get_contents('php://input'), true);
@@ -15,24 +12,18 @@ if (empty($body['email']) || empty($body['password'])) {
     exit;
 }
 
-$fichier = __DIR__ . '/../data/users.json';
-$users   = json_decode(file_get_contents($fichier), true) ?? [];
+$pdo = connexion();
 
-foreach ($users as $u) {
-    if ($u['email'] === $body['email']) {
-        http_response_code(409);
-        echo json_encode(['erreur' => 'Cet email est déjà utilisé']);
-        exit;
-    }
+$requete = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+$requete->execute([$body['email']]);
+if ($requete->fetch()) {
+    http_response_code(409);
+    echo json_encode(['erreur' => 'Cet email est déjà utilisé']);
+    exit;
 }
 
-$nouveauUser = [
-    'id'            => count($users) + 1,
-    'email'         => $body['email'],
-    'password_hash' => password_hash($body['password'], PASSWORD_BCRYPT)
-];
-$users[] = $nouveauUser;
-file_put_contents($fichier, json_encode($users, JSON_PRETTY_PRINT));
+$requete = $pdo->prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
+$requete->execute([$body['email'], password_hash($body['password'], PASSWORD_BCRYPT)]);
 
 http_response_code(201);
-echo json_encode(['message' => 'Compte créé', 'email' => $nouveauUser['email']]);
+echo json_encode(['message' => 'Compte créé', 'email' => $body['email']]);
