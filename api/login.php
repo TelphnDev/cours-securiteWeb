@@ -17,10 +17,13 @@ if (empty($body['email']) || empty($body['password'])) {
 
 $pdo = connexion();
 
-$sql = "SELECT * FROM users WHERE email = '" . $body['email'] . "'";
-$userTrouve = $pdo->query($sql)->fetch(PDO::FETCH_ASSOC);
+// L'email est envoyé comme donnée, jamais comme code
+$requete = $pdo->prepare('SELECT id, email, password_hash FROM users WHERE email = ?');
+$requete->execute([$body['email']]);
+$userTrouve = $requete->fetch(PDO::FETCH_ASSOC);
 
-if (!$userTrouve) {
+// On revérifie toujours le mot de passe
+if (!$userTrouve || !password_verify($body['password'], $userTrouve['password_hash'])) {
     http_response_code(401);
     echo json_encode(['erreur' => 'Identifiants incorrects']);
     exit;

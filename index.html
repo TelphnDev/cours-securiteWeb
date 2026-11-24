@@ -68,7 +68,7 @@
 
   <h2>Connexion</h2>
   <form id="form-login">
-    <input  id="login-email" placeholder="Email" required>
+    <input id="login-email" placeholder="Email" required>
     <input type="password" id="login-password" placeholder="Mot de passe" required>
     <button type="submit">Se connecter</button>
   </form>
@@ -114,7 +114,9 @@
       const liste = document.getElementById('liste-notes');
       liste.innerHTML = '';
       notes.forEach(note => {
-        liste.innerHTML += `<li><strong>#${note.id}</strong> ${note.texte}</li>`;
+        const li = document.createElement('li');
+        li.textContent = '#' + note.id + ' ' + note.texte;
+        liste.appendChild(li);
       });
     }
 
